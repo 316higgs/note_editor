@@ -220,7 +220,7 @@ def write_json(
     article_dir: Path,
     versions: list[VersionFile],
     revision_diffs: list[RevisionDiff],
-) -> None:
+) -> Path:
     output = {
         "article_dir": str(article_dir),
         "versions": [asdict(v) for v in versions],
@@ -233,18 +233,19 @@ def write_json(
         ],
     }
 
-    output_path = article_dir / "revision_diff.json"
+    output_path = article_dir / f"{article_dir.name}_revision_diff.json"
     output_path.write_text(
         json.dumps(output, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    return output_path
 
 
 def write_markdown(
     article_dir: Path,
     versions: list[VersionFile],
     revision_diffs: list[RevisionDiff],
-) -> None:
+) -> Path:
     lines: list[str] = []
 
     lines.append("# note記事 校正差分レポート")
@@ -325,8 +326,9 @@ def write_markdown(
                 lines.append("> " + c.after.replace("\n", "\n> "))
                 lines.append("")
 
-    output_path = article_dir / "revision_diff_for_gemini.md"
+    output_path = article_dir / f"{article_dir.name}_revision_diff_for_gemini.md"
     output_path.write_text("\n".join(lines), encoding="utf-8")
+    return output_path
 
 
 def process_article_dir(article_dir: Path) -> None:
@@ -341,12 +343,12 @@ def process_article_dir(article_dir: Path) -> None:
 
     revision_diffs = build_revision_diffs(versions)
 
-    write_json(article_dir, versions, revision_diffs)
-    write_markdown(article_dir, versions, revision_diffs)
+    json_path = write_json(article_dir, versions, revision_diffs)
+    markdown_path = write_markdown(article_dir, versions, revision_diffs)
 
     print(f"[OK] {article_dir}")
-    print("  - revision_diff.json")
-    print("  - revision_diff_for_gemini.md")
+    print(f"  - {json_path.name}")
+    print(f"  - {markdown_path.name}")
 
 
 def main() -> None:
